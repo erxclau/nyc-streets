@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="text-scale" content="scale" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Fraunces:opsz,wght,SOFT,WONK@9..144,300,50,0..1&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			/* https://vincent.bernat.ch/en/blog/2024-cls-webfonts */
+
+			@font-face {
+				font-family: 'Fraunces Fallback';
+				src: local('Times New Roman');
+				size-adjust: 103%;
+				ascent-override: normal;
+				descent-override: normal;
+				line-gap-override: normal;
+			}
+
+			@font-face {
+				font-family: 'Barlow Geneva Fallback';
+				src: local('Geneva');
+				size-adjust: 88.4%;
+				ascent-override: normal;
+				descent-override: normal;
+				line-gap-override: normal;
+			}
+
+			@font-face {
+				font-family: 'Barlow Helvetica Neue Fallback';
+				src: local('Helvetica Neue');
+				size-adjust: 95%;
+				ascent-override: normal;
+				descent-override: normal;
+				line-gap-override: normal;
+			}
+
+			:root {
+				--font-headline: 'Fraunces', 'Fraunces Fallback';
+				--font-serif: Baskerville, serif;
+				--font-sans: Barlow, 'Barlow Geneva Fallback', 'Barlow Helvetica Neue Fallback', sans-serif;
+
+				--color-light: rgb(231, 229, 229);
+				--color-dark: rgb(27.5, 32.5, 32.5);
+
+				--color-light-headline: rgb(55, 129, 255);
+				--color-dark-headline: #0f59d7;
+
+				--color-light-highlight: rgb(126, 173, 252);
+				--color-dark-highlight: rgb(4, 68, 161);
+
+				--color-secondary: var(--color-light);
+				--color-secondary-active: white;
+
+				--color-primary: var(--color-dark);
+				--color-primary-active: black;
+
+				--color-headline: var(--color-dark-headline);
+				--color-highlight: var(--color-dark-highlight);
+
+				--l-offset: 17.5;
+				--color-neutral: lch(from var(--color-primary) calc(l + var(--l-offset)) c h);
+			}
+
+			html,
+			body {
+				padding: 0;
+				margin: 0;
+
+				background-color: var(--color-secondary);
+				color: var(--color-primary);
+				font-family: var(--font-serif);
+				scroll-behavior: smooth;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--color-secondary: var(--color-dark);
+					--color-secondary-active: black;
+
+					--color-primary: var(--color-light);
+					--color-primary-active: white;
+
+					--color-headline: var(--color-light-headline);
+					--color-highlight: var(--color-light-highlight);
+
+					--l-offset: -17.5;
+				}
+			}
+		</style>
+		<title>Name New York City streets</title>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

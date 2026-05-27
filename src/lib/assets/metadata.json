@@ -1,0 +1,16 @@
+{
+	"bbox": {
+		"minLatitude": 40.49787772944257,
+		"minLongitude": -74.25495722091921,
+		"maxLatitude": 40.91510284353152,
+		"maxLongitude": -73.70000924119739
+	},
+	"mileLength": 9650.620904117568,
+	"boroughLengths": {
+		"Manhattan": 1152.025546121002,
+		"The Bronx": 1487.4420568980263,
+		"Brooklyn": 2237.6452372011586,
+		"Queens": 3428.0691524166195,
+		"Staten Island": 1345.4389114807495
+	}
+}
