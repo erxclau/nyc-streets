@@ -1,4 +1,5 @@
 import type { PageLoad } from './$types';
+import { asset } from '$app/paths';
 import metadata from '$lib/assets/metadata.json';
 
 import { deserialize } from 'flatgeobuf/lib/mjs/geojson.js';
@@ -8,7 +9,7 @@ import { csvParse } from 'd3-dsv';
 export const ssr = false;
 
 export const load: PageLoad = async ({ fetch }) => {
-	const nycResponse = await fetch('/nyc.fgb');
+	const nycResponse = await fetch(asset('/nyc.fgb'));
 	if (!nycResponse.ok) {
 		throw new Error(`${nycResponse.status}: ${nycResponse.statusText}`);
 	}
@@ -24,7 +25,7 @@ export const load: PageLoad = async ({ fetch }) => {
 
 	const nyc = await Array.fromAsync(features);
 
-	const namesResponse = await fetch('/names.csv');
+	const namesResponse = await fetch(asset('/names.csv'));
 	if (!namesResponse.ok) {
 		throw new Error(`${namesResponse.status}: ${namesResponse.statusText}`);
 	}
