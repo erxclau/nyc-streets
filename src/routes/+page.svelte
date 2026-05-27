@@ -304,6 +304,8 @@
 			padding-bottom: 36px;
 			bottom: 0;
 			gap: 0.5rem;
+			max-height: 50vh;
+			overflow: scroll;
 		}
 	}
 
