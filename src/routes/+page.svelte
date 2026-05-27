@@ -301,11 +301,19 @@
 			max-width: 100%;
 			top: unset;
 			padding: 0.5rem;
-			padding-bottom: 36px;
 			bottom: 0;
 			gap: 0.5rem;
 			max-height: 50vh;
 			overflow: scroll;
+		}
+
+		:global(.mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-bottom-left) {
+			bottom: unset;
+			top: 0;
+		}
+
+		:global(.mapboxgl-ctrl-bottom-left .mapboxgl-ctrl) {
+			margin: 10px 10px 0;
 		}
 	}
 
