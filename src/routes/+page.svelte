@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { Map, type FeatureSelector } from 'mapbox-gl';
+	import type { FeatureSelector } from 'mapbox-gl';
+	import mapboxgl from 'mapbox-gl/esm';
 	import 'mapbox-gl/dist/mapbox-gl.css';
 
 	import metadata from '$lib/assets/metadata.json';
@@ -26,7 +27,7 @@
 
 	let ref: HTMLDivElement;
 
-	let map: Map;
+	let map: mapboxgl.Map;
 
 	let objectIds: SvelteSet<number> = new SvelteSet();
 
@@ -61,7 +62,7 @@
 	});
 
 	onMount(() => {
-		map = new Map({
+		map = new mapboxgl.Map({
 			container: ref,
 			accessToken: PUBLIC_MAPBOX_TOKEN,
 			bounds: [
@@ -261,9 +262,10 @@
 				<small>
 					This page uses a modified version of
 					<a href="https://www.nyc.gov/content/planning/pages/resources/datasets/lion">LION</a>
-					<span class="parenthesis">(<a href="https://hub.arcgis.com/datasets/DCP::lion/about">ArcGIS Hub</a>)</span> from New York
-					City’s Department of City Planning. Modifications were made in Mapshaper. Data is loaded
-					using Flatgeobuf.</small
+					<span class="parenthesis"
+						>(<a href="https://hub.arcgis.com/datasets/DCP::lion/about">ArcGIS Hub</a>)</span
+					> from New York City’s Department of City Planning. Modifications were made in Mapshaper. Data
+					is loaded using Flatgeobuf.</small
 				>
 			</p>
 		</details>
