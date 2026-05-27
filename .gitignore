@@ -25,3 +25,5 @@ vite.config.ts.timestamp-*
 workspace/data/*
 workspace/out/*
 workspace/scratch.mts
+
+worker-configuration.d.ts

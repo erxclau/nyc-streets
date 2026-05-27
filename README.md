@@ -9,5 +9,3 @@ I applied the following filters using [Mapshaper](https://mapshaper.org):
 ```plaintext
 npx --node-options="--max-old-space-size=4096" mapshaper workspace/data/nyc.geojson -filter-fields OBJECTID,Street,FeatureTyp,Join_ID,StreetCode -filter '!["1","2","3","5","7","8","9","A","F"].includes(String(FeatureTyp))' -o workspace/out/nyc.fgb
 ```
-
-<https://observablehq.com/@chrispahm/turf-js-buffer-end-cap-styles>
