@@ -158,10 +158,6 @@
 				data: nyc
 			});
 
-			// TODO: Use <https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery>
-			// to track user’s dark mode preference to adjust the paint styles
-			// in an effect with map.setPaintProperty('layer-nyc', 'property', 'value')
-
 			map.addLayer({
 				id: 'layer-nyc',
 				source: 'source-nyc',
@@ -171,10 +167,18 @@
 						'case',
 						['boolean', ['feature-state', 'highlight'], false],
 						'#0f59d7',
-						'#1c2121'
+						'#0444a1'
 					],
-					'line-opacity': ['case', ['boolean', ['feature-state', 'highlight'], false], 1, 0.375],
-					'line-width': ['case', ['boolean', ['feature-state', 'highlight'], false], 2, 0.5]
+					'line-opacity': ['case', ['boolean', ['feature-state', 'highlight'], false], 1, 0.125],
+					'line-width': [
+						'interpolate',
+						['linear'],
+						['zoom'],
+						11,
+						['case', ['boolean', ['feature-state', 'highlight'], false], 1.25, 0.5],
+						12.5,
+						['case', ['boolean', ['feature-state', 'highlight'], false], 3, 0.5]
+					]
 				}
 			});
 		});
