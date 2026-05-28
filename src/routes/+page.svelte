@@ -13,6 +13,8 @@
 
 	let { data } = $props();
 
+	const localStorageKey = 'nyc-streets-object-ids';
+
 	const abbreviations = {
 		st: 'street',
 		blvd: 'boulevard',
@@ -112,7 +114,46 @@
 		).sort(([a], [b]) => ascending(a, b));
 	});
 
+	const updateFeatureState = () => {
+		const highlightFeatures = map.querySourceFeatures('source-nyc').filter((d) => {
+			const id = d.id;
+			if (id === undefined || isNaN(+id)) {
+				return false;
+			}
+
+			return objectIds.has(+id);
+		});
+
+		for (const feature of highlightFeatures) {
+			map.setFeatureState(
+				{
+					id: feature.id,
+					source: 'source-nyc'
+				} as FeatureSelector,
+				{
+					highlight: true
+				}
+			);
+		}
+	};
+
 	onMount(() => {
+		const localObjectIds = localStorage.getItem(localStorageKey);
+		if (localObjectIds !== null) {
+			let json: Array<number> = [];
+			try {
+				json = JSON.parse(localObjectIds);
+			} catch (e) {
+				console.error(e);
+			}
+
+			if (Array.isArray(json)) {
+				for (const id of json) {
+					objectIds.add(id);
+				}
+			}
+		}
+
 		map = new mapboxgl.Map({
 			container: ref,
 			accessToken: PUBLIC_MAPBOX_TOKEN,
@@ -181,38 +222,29 @@
 					]
 				}
 			});
+
+			if (objectIds.size > 0) {
+				map.on('sourcedata', (e) => {
+					if (e.sourceId === 'source-nyc' && e.isSourceLoaded) {
+						updateFeatureState();
+					}
+				});
+			}
 		});
 
 		map.on('move', () => {
-			if (objectIds.size === 0) {
-				return;
-			}
-
-			const highlightFeatures = map.querySourceFeatures('source-nyc').filter((d) => {
-				const id = d.id;
-				if (id === undefined || isNaN(+id)) {
-					return false;
-				}
-
-				return objectIds.has(+id);
-			});
-
-			for (const feature of highlightFeatures) {
-				map.setFeatureState(
-					{
-						id: feature.id,
-						source: 'source-nyc'
-					} as FeatureSelector,
-					{
-						highlight: true
-					}
-				);
+			if (objectIds.size > 0) {
+				updateFeatureState();
 			}
 		});
 
 		return () => {
 			map.remove();
 		};
+	});
+
+	$effect(() => {
+		localStorage.setItem(localStorageKey, JSON.stringify(Array.from(objectIds)));
 	});
 </script>
 
@@ -271,26 +303,7 @@
 					objectIds.add(f.properties.OBJECTID);
 				}
 
-				const highlightFeatures = map.querySourceFeatures('source-nyc').filter((d) => {
-					const id = d.id;
-					if (id === undefined || isNaN(+id)) {
-						return false;
-					}
-
-					return objectIds.has(+id);
-				});
-
-				for (const feature of highlightFeatures) {
-					map.setFeatureState(
-						{
-							id: feature.id,
-							source: 'source-nyc'
-						} as FeatureSelector,
-						{
-							highlight: true
-						}
-					);
-				}
+				updateFeatureState();
 
 				if (oldObjectIdsSize < objectIds.size) {
 					e.currentTarget.reset();
@@ -371,7 +384,7 @@
 
 		<details>
 			<summary style="color: var(--color-neutral);"
-				><small>Made by <a href="https://erxclau.me" id="byline">Eric Lau</a></small>.</summary
+				><small>Made by <a href="https://erxclau.me" id="byline">Eric Lau</a></small></summary
 			>
 			<p style="padding-left: 0.625rem;">
 				<small>
