@@ -4,7 +4,7 @@ import metadata from '$lib/assets/metadata.json';
 
 import { deserialize } from 'flatgeobuf/lib/mjs/geojson.js';
 import type { Feature, LineString } from 'geojson';
-// import { csvParse } from 'd3-dsv';
+import { csvParse } from 'd3-dsv';
 
 export const ssr = false;
 
@@ -25,17 +25,17 @@ export const load: PageLoad = async ({ fetch }) => {
 
 	const nyc = await Array.fromAsync(features);
 
-	// const namesResponse = await fetch(asset('/names.csv'));
-	// if (!namesResponse.ok) {
-	// 	throw new Error(`${namesResponse.status}: ${namesResponse.statusText}`);
-	// }
+	const namesResponse = await fetch(asset('/names.csv'));
+	if (!namesResponse.ok) {
+		throw new Error(`${namesResponse.status}: ${namesResponse.statusText}`);
+	}
 
-	// const namesText = await namesResponse.text();
-	// const names = csvParse<AlternateNameColumn>(namesText);
+	const namesText = await namesResponse.text();
+	const names = csvParse<AlternateNameColumn>(namesText);
 
 	return {
 		nyc: nyc,
-		// names: names,
+		names,
 		metadata
 	};
 };

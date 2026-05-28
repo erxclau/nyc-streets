@@ -228,6 +228,7 @@
 				const attempt = attemptData.toString().toLowerCase().trim();
 				const expandedAttempt = expand(attempt);
 
+				// eslint-disable-next-line svelte/prefer-svelte-reactivity
 				const identifiedFeatureStreetCodes = new Set(
 					data.nyc
 						.filter((d) => {
@@ -237,17 +238,27 @@
 						.map((d) => d.properties.StreetCode)
 				);
 
-				// const alternateJoinIds = new Set(
-				// 	data.names
-				// 		.filter((d) => {
-				// 			return d.Street.toLowerCase() === attempt;
-				// 		})
-				// 		.map((d) => d.Join_ID)
-				// );
+				const alternateJoinIds = new Set(
+					data.names
+						.filter((d) => {
+							return (
+								d.Street.toLowerCase() === attempt || d.Street.toLowerCase() === expandedAttempt
+							);
+						})
+						.map((d) => d.Join_ID)
+				);
 
-				const identifiedFeatures = data.nyc.filter(
-					(d) => identifiedFeatureStreetCodes.has(d.properties.StreetCode)
-					// || alternateJoinIds.has(d.properties.Join_ID)
+				if (identifiedFeatureStreetCodes.size === 0) {
+					// TODO: may need some improvement here...
+					for (const f of data.nyc) {
+						if (alternateJoinIds.has(f.properties.Join_ID)) {
+							identifiedFeatureStreetCodes.add(f.properties.StreetCode);
+						}
+					}
+				}
+
+				const identifiedFeatures = data.nyc.filter((d) =>
+					identifiedFeatureStreetCodes.has(d.properties.StreetCode)
 				);
 
 				let oldObjectIdsSize = objectIds.size;
