@@ -521,7 +521,8 @@
 
 	@starting-style {
 		.update {
-			background-color: var(--color-highlight);
+			background-color: var(--color-light-highlight);
+			background-color: rgb(from var(--color-light-highlight) r g b / 0.75);
 		}
 	}
 
