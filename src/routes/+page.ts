@@ -6,6 +6,8 @@ import { deserialize } from 'flatgeobuf/lib/mjs/geojson.js';
 import type { Feature, LineString } from 'geojson';
 import { csvParse } from 'd3-dsv';
 
+export const ssr = false;
+
 export const load: PageLoad = async ({ fetch }) => {
 	const nycResponse = await fetch(asset('/nyc.fgb'));
 	if (!nycResponse.ok) {

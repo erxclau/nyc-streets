@@ -5,7 +5,7 @@ import { csvFormat, csvParse } from 'd3-dsv';
 
 import type { Feature, LineString } from 'geojson';
 
-const fgb = readFileSync('workspace/data/nyc.fgb');
+const fgb = readFileSync('workspace/out/nyc.fgb');
 const view = new Uint8Array(fgb.buffer);
 const features = deserialize(view) as AsyncGenerator<Feature<LineString, StreetProperties>>;
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	import type { FeatureSelector } from 'mapbox-gl';
 	import mapboxgl from 'mapbox-gl/esm';
@@ -27,9 +27,13 @@
 
 	let ref: HTMLDivElement;
 
+	// svelte-ignore non_reactive_update
+	let inputRef: HTMLInputElement;
+
 	let map: mapboxgl.Map;
 
 	let objectIds: SvelteSet<number> = new SvelteSet();
+	let incorrectGuess = $state(0);
 
 	const { identifiedMiles, boroughLengths } = $derived.by(() => {
 		const objectLengths = data.nyc
@@ -160,47 +164,9 @@
 <main>
 	<hgroup>
 		<h1>Name New York City streets</h1>
-		<details>
-			<summary>
-				<p style="display: inline; font-family: var(--font-sans); color: var(--color-primary)">
-					<span class="number">{numberFormat.format(identifiedMiles)}</span> of
-					<span class="number">{numberFormat.format(metadata.mileLength)}</span>
-					miles
-					<span class="parenthesis"
-						>(<span class="number">{Math.round((identifiedMiles / metadata.mileLength) * 100)}</span
-						>%)</span
-					>
-					identified
-				</p>
-			</summary>
-			<ul>
-				{#each identifiedStreets as [borough, boroughStreets] (borough)}
-					{@const boroughLength = boroughLengths.get(borough) ?? 0}
-					<li>
-						<details>
-							<summary
-								><p style="display: inline;">
-									<span class="borough">{borough}</span>
-									<span class="parenthesis">
-										(<span class="number"
-											>{Math.round((boroughLength / metadata.boroughLengths[borough]) * 100)}%</span
-										>)
-									</span>
-								</p></summary
-							>
-							<ul class="streets">
-								{#each boroughStreets as street (street)}
-									<li class="street">{street.toLowerCase()}</li>
-								{/each}
-							</ul>
-						</details>
-					</li>
-				{/each}
-			</ul>
-		</details>
 
 		<form
-			onsubmit={(e) => {
+			onsubmit={async (e) => {
 				e.preventDefault();
 				const formData = new FormData(e.currentTarget);
 				const attemptData = formData.get('attempt');
@@ -218,11 +184,23 @@
 						.map((d) => d.properties.StreetCode)
 				);
 
-				const identifiedFeatures = data.nyc.filter((d) =>
-					identifiedFeatureStreetCodes.has(d.properties.StreetCode)
+				// const alternateJoinIds = new Set(
+				// 	data.names
+				// 		.filter((d) => {
+				// 			return d.Street.toLowerCase() === attempt;
+				// 		})
+				// 		.map((d) => d.Join_ID)
+				// );
+
+				const identifiedFeatures = data.nyc.filter(
+					(d) => identifiedFeatureStreetCodes.has(d.properties.StreetCode)
+					// || alternateJoinIds.has(d.properties.Join_ID)
 				);
 
+				let oldObjectIdsSize = objectIds.size;
+
 				for (const f of identifiedFeatures) {
+					console.log(f.properties.Street, f.properties.Join_ID);
 					objectIds.add(f.properties.OBJECTID);
 				}
 
@@ -247,18 +225,89 @@
 					);
 				}
 
-				e.currentTarget.reset();
+				if (oldObjectIdsSize < objectIds.size) {
+					e.currentTarget.reset();
+					return;
+				}
+
+				incorrectGuess++;
+				await tick();
+				inputRef.focus();
+				inputRef.value = attemptData.toString();
 			}}
 		>
-			<label for="guess">Enter a street name</label>
-			<input type="text" name="attempt" id="attempt" />
+			<label for="guess" class="sr-only">Enter a street name</label>
+			{#key incorrectGuess}
+				<input
+					bind:this={inputRef}
+					type="text"
+					name="attempt"
+					id="attempt"
+					placeholder="Enter a street name"
+					class:shake={incorrectGuess > 0}
+				/>
+			{/key}
 		</form>
+
+		<details>
+			<summary>
+				<p style="display: inline; font-family: var(--font-sans); color: var(--color-primary)">
+					{#key identifiedMiles}
+						<span class="number" class:update={identifiedMiles > 0}
+							>{numberFormat.format(identifiedMiles)}</span
+						>
+					{/key}
+					of
+					<span class="number">{numberFormat.format(metadata.mileLength)}</span>
+					miles
+					{#key identifiedMiles}
+						<span class="parenthesis" class:update={identifiedMiles > 0}
+							>(<span class="number"
+								>{Math.round((identifiedMiles / metadata.mileLength) * 100)}</span
+							>%)</span
+						>
+					{/key}
+					identified {#if objectIds.size > 0}<small
+							class="parenthesis"
+							style="color: var(--color-neutral)">[Click for details]</small
+						>{/if}
+				</p>
+			</summary>
+			<ul>
+				{#each identifiedStreets as [borough, boroughStreets] (borough)}
+					{@const boroughLength = boroughLengths.get(borough) ?? 0}
+					<li>
+						<details>
+							<summary
+								>{#key boroughStreets.length}
+									<p style="display: inline;" class="update">
+										<span class="borough">{borough}</span>
+										<span class="parenthesis">
+											(<span class="number"
+												>{Math.round(
+													(boroughLength / metadata.boroughLengths[borough]) * 100
+												)}%</span
+											>)
+										</span>
+									</p>
+								{/key}
+							</summary>
+							<ul class="streets">
+								{#each boroughStreets as street (street)}
+									<li class="street update">{street.toLowerCase()}</li>
+								{/each}
+							</ul>
+						</details>
+					</li>
+				{/each}
+			</ul>
+		</details>
 
 		<details>
 			<summary style="color: var(--color-neutral);"
 				><small>Made by <a href="https://erxclau.me" id="byline">Eric Lau</a></small>.</summary
 			>
-			<p>
+			<p style="padding-left: 0.625rem;">
 				<small>
 					This page uses a modified version of
 					<a href="https://www.nyc.gov/content/planning/pages/resources/datasets/lion">LION</a>
@@ -294,6 +343,8 @@
 		padding: 1rem;
 		display: grid;
 		gap: 0.625rem;
+		overflow: scroll;
+		max-height: calc(100vh - 36px);
 	}
 
 	@media screen and (max-width: 600px) {
@@ -304,7 +355,6 @@
 			bottom: 0;
 			gap: 0.5rem;
 			max-height: 50vh;
-			overflow: scroll;
 		}
 
 		:global(.mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-bottom-left) {
@@ -321,6 +371,8 @@
 		list-style-type: '+ ';
 		font-family: var(--font-sans);
 		cursor: pointer;
+		list-style-position: outside;
+		margin-left: 10px;
 	}
 
 	details[open] > summary {
@@ -395,6 +447,18 @@
 		height: 100%;
 	}
 
+	.update {
+		transition: background-color 3s;
+		background-color: transparent;
+		width: fit-content;
+	}
+
+	@starting-style {
+		.update {
+			background-color: var(--color-highlight);
+		}
+	}
+
 	.number {
 		font-variant-numeric: tabular-nums;
 	}
@@ -402,7 +466,7 @@
 	ul {
 		margin: 0;
 		padding: 0;
-		padding-left: 1rem;
+		padding-left: 0.625rem;
 		list-style: none;
 		font-family: var(--font-sans);
 
@@ -421,7 +485,7 @@
 	}
 
 	ul.streets {
-		padding-left: 1rem;
+		padding-left: 0.625rem;
 		display: grid;
 		gap: 0rem;
 	}
@@ -430,5 +494,39 @@
 		display: inline-block;
 		padding-left: 0.125rem;
 		padding-right: 0.125rem;
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	@keyframes shake {
+		0% {
+			transform: translateX(0);
+		}
+		25% {
+			transform: translateX(5px);
+		}
+		50% {
+			transform: translateX(-5px);
+		}
+		75% {
+			transform: translateX(5px);
+		}
+		100% {
+			transform: translateX(0);
+		}
+	}
+
+	.shake {
+		animation: shake 0.375s ease-in-out;
 	}
 </style>
