@@ -22,6 +22,7 @@
 		av: 'avenue',
 		ave: 'avenue',
 		sq: 'square',
+		dr: 'drive',
 		w: 'west',
 		s: 'south',
 		n: 'north',
@@ -30,7 +31,7 @@
 
 	const expandStreet = (attempt: string) => {
 		let expanded = attempt;
-		const suffix = /.+ (st|blvd|pl|av|ave|sq)$/;
+		const suffix = /.+ (st|blvd|pl|av|ave|sq|dr)$/;
 		const suffixMatch = suffix.exec(attempt);
 		if (suffixMatch !== null && suffixMatch.at(1) !== undefined) {
 			expanded =
