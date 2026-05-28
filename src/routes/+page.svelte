@@ -27,9 +27,6 @@
 
 	let ref: HTMLDivElement;
 
-	// svelte-ignore non_reactive_update
-	let inputRef: HTMLInputElement;
-
 	let map: mapboxgl.Map;
 
 	let objectIds: SvelteSet<number> = new SvelteSet();
@@ -110,6 +107,10 @@
 				type: 'geojson',
 				data: nyc
 			});
+
+			// TODO: Use <https://svelte.dev/docs/svelte/svelte-reactivity#MediaQuery>
+			// to track user’s dark mode preference to adjust the paint styles
+			// in an effect with map.setPaintProperty('layer-nyc', 'property', 'value')
 
 			map.addLayer({
 				id: 'layer-nyc',
@@ -231,22 +232,21 @@
 				}
 
 				incorrectGuess++;
-				await tick();
-				inputRef.focus();
-				inputRef.value = attemptData.toString();
+
+				if (incorrectGuess) {
+					const input = e.currentTarget.querySelector('input');
+					if (!input) {
+						return;
+					}
+
+					input.classList.remove('shake');
+					await tick();
+					input.classList.add('shake');
+				}
 			}}
 		>
 			<label for="guess" class="sr-only">Enter a street name</label>
-			{#key incorrectGuess}
-				<input
-					bind:this={inputRef}
-					type="text"
-					name="attempt"
-					id="attempt"
-					placeholder="Enter a street name"
-					class:shake={incorrectGuess > 0}
-				/>
-			{/key}
+			<input type="text" name="attempt" id="attempt" placeholder="Enter a street name" />
 		</form>
 
 		<details>
@@ -526,7 +526,7 @@
 		}
 	}
 
-	.shake {
+	:global(.shake) {
 		animation: shake 0.375s ease-in-out;
 	}
 </style>
