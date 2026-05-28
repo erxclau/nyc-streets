@@ -13,6 +13,56 @@
 
 	let { data } = $props();
 
+	const abbreviations = {
+		st: 'street',
+		blvd: 'boulevard',
+		pl: 'place',
+		av: 'avenue',
+		ave: 'avenue',
+		sq: 'square',
+		w: 'west',
+		s: 'south',
+		n: 'north',
+		e: 'east'
+	};
+
+	const expandStreet = (attempt: string) => {
+		let expanded = attempt;
+		const suffix = /.+ (st|blvd|pl|av|ave|sq)$/;
+		const suffixMatch = suffix.exec(attempt);
+		if (suffixMatch !== null && suffixMatch.at(1) !== undefined) {
+			expanded =
+				attempt.substring(0, attempt.lastIndexOf(suffixMatch[1])) +
+				abbreviations[suffixMatch[1] as keyof typeof abbreviations];
+		}
+
+		return expanded;
+	};
+
+	const expand = (attempt: string) => {
+		let expanded = attempt;
+		const prefix = /^(av|ave|n|s|e|w) .+$/;
+		const prefixMatch = prefix.exec(attempt);
+		if (prefixMatch !== null && prefixMatch.at(1) !== undefined) {
+			expanded =
+				abbreviations[prefixMatch[1] as keyof typeof abbreviations] +
+				attempt.substring(prefixMatch[1].length);
+		}
+
+		const suffixDirection = /^.+ (n|s|e|w)$/;
+		const suffixDirectionMatch = suffixDirection.exec(expanded);
+		if (suffixDirectionMatch !== null && suffixDirectionMatch.at(1) !== undefined) {
+			expanded =
+				expandStreet(attempt.substring(0, attempt.lastIndexOf(suffixDirectionMatch[1]) - 1)) +
+				' ' +
+				abbreviations[suffixDirectionMatch[1] as keyof typeof abbreviations];
+		} else {
+			expanded = expandStreet(expanded);
+		}
+
+		return expanded;
+	};
+
 	const boroughCodes = {
 		1: 'Manhattan',
 		2: 'The Bronx',
@@ -176,11 +226,13 @@
 				}
 
 				const attempt = attemptData.toString().toLowerCase().trim();
+				const expandedAttempt = expand(attempt);
 
 				const identifiedFeatureStreetCodes = new Set(
 					data.nyc
 						.filter((d) => {
-							return d.properties.Street.toLowerCase() === attempt;
+							const street = d.properties.Street.toLowerCase();
+							return street === attempt || street === expandedAttempt;
 						})
 						.map((d) => d.properties.StreetCode)
 				);
@@ -201,7 +253,6 @@
 				let oldObjectIdsSize = objectIds.size;
 
 				for (const f of identifiedFeatures) {
-					console.log(f.properties.Street, f.properties.Join_ID);
 					objectIds.add(f.properties.OBJECTID);
 				}
 
