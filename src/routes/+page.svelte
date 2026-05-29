@@ -348,7 +348,7 @@
 			</form>
 		</div>
 
-		<div style="display: grid; gap: 0.625rem;">
+		<div style="display: grid; gap: var(--gap);">
 			<details>
 				<summary>
 					<p style="display: inline; font-family: var(--font-sans); color: var(--color-primary)">
@@ -435,6 +435,8 @@
 
 	hgroup {
 		--padding: 1rem;
+		--gap: 0.625rem;
+		--margin: 0.5rem;
 		position: absolute;
 		top: 0;
 		z-index: 1;
@@ -446,31 +448,32 @@
 		padding-top: 0;
 		display: grid;
 		overflow: scroll;
-		max-height: calc(100vh - 36px);
+		max-height: calc(100vh - 36px - var(--margin));
+		box-shadow: 0 0 1px 1px rgb(from var(--color-neutral) r g b / 0.25);
+
+		border-radius: 0.375rem;
+		margin-top: var(--margin);
+		margin-left: var(--margin);
 	}
 
 	#form {
 		display: grid;
-		gap: 0.625rem;
+		gap: var(--gap);
 		position: sticky;
 		top: 0;
 		padding-top: var(--padding);
-		padding-bottom: 0.625rem;
+		padding-bottom: var(--gap);
 		background-color: inherit;
 	}
 
 	@media screen and (max-width: 600px) {
 		hgroup {
-			--padding: 0.5rem;
-			max-width: 100%;
+			--padding: 0.75rem;
+			--gap: 0.375rem;
+			max-width: calc(100% - var(--margin) * 2);
 			top: unset;
-			bottom: 0;
+			bottom: var(--margin);
 			max-height: 50vh;
-		}
-
-		#form {
-			gap: 0.5rem;
-			padding-bottom: 0.5rem;
 		}
 
 		:global(.mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-bottom-left) {
@@ -507,6 +510,7 @@
 		font-weight: 300;
 		font-variation-settings: 'WONK' 0;
 		text-wrap: pretty;
+		line-height: calc(1rem + 0.875vw);
 	}
 
 	h1,
@@ -548,6 +552,7 @@
 		font-family: var(--font-sans);
 		font-size: 1.25rem;
 		padding: 0.25rem;
+		border-radius: 0.25rem;
 	}
 
 	figure {
