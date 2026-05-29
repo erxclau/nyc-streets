@@ -468,8 +468,10 @@
 
 	@media screen and (max-width: 600px) {
 		hgroup {
-			--padding: 0.75rem;
+			--padding: 0.625rem;
 			--gap: 0.375rem;
+			--margin: 0;
+			border-radius: 0;
 			max-width: calc(100% - var(--margin) * 2);
 			top: unset;
 			bottom: var(--margin);
