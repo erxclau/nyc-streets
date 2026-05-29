@@ -109,7 +109,24 @@
 	const identifiedStreets = $derived.by(() => {
 		return rollups(
 			data.nyc.filter((d) => objectIds.has(d.properties.OBJECTID)),
-			(v) => Array.from(new Set(v.map((o) => o.properties.Street))).sort(),
+			(v) =>
+				Array.from(new Set(v.map((o) => o.properties.Street))).sort((a, b) => {
+					const aNumberMatch = /^\d+\s|\s\d+\s|\s\d+$/.exec(a);
+					const bNumberMatch = /^\d+\s|\s\d+\s|\s\d+$/.exec(b);
+
+					if (aNumberMatch === null || bNumberMatch === null) {
+						console.log(a, b);
+						return ascending(a, b);
+					}
+
+					const aSansNumber = a.replaceAll(aNumberMatch[0], '').trim();
+					const bSansNumber = b.replaceAll(bNumberMatch[0], '').trim();
+
+					const aNumber = +aNumberMatch[0].trim();
+					const bNumber = +bNumberMatch[0].trim();
+
+					return ascending(aSansNumber, bSansNumber) || ascending(aNumber, bNumber);
+				}),
 			(d) =>
 				boroughCodes[+d.properties.StreetCode.toString().charAt(0) as keyof typeof boroughCodes]
 		).sort(([a], [b]) => ascending(a, b));
@@ -251,153 +268,157 @@
 
 <main>
 	<hgroup>
-		<h1>Name New York City streets</h1>
+		<div id="form">
+			<h1>Name New York City streets</h1>
 
-		<form
-			onsubmit={async (e) => {
-				e.preventDefault();
-				const formData = new FormData(e.currentTarget);
-				const attemptData = formData.get('attempt');
-				if (!attemptData) {
-					return;
-				}
-
-				const attempt = attemptData.toString().toLowerCase().trim();
-				const expandedAttempt = expand(attempt);
-
-				// eslint-disable-next-line svelte/prefer-svelte-reactivity
-				const identifiedFeatureStreetCodes = new Set(
-					data.nyc
-						.filter((d) => {
-							const street = d.properties.Street.toLowerCase();
-							return street === attempt || street === expandedAttempt;
-						})
-						.map((d) => d.properties.StreetCode)
-				);
-
-				const alternateJoinIds = new Set(
-					data.names
-						.filter((d) => {
-							return (
-								d.Street.toLowerCase() === attempt || d.Street.toLowerCase() === expandedAttempt
-							);
-						})
-						.map((d) => d.Join_ID)
-				);
-
-				if (identifiedFeatureStreetCodes.size === 0) {
-					// TODO: may need some improvement here...
-					for (const f of data.nyc) {
-						if (alternateJoinIds.has(f.properties.Join_ID)) {
-							identifiedFeatureStreetCodes.add(f.properties.StreetCode);
-						}
-					}
-				}
-
-				const identifiedFeatures = data.nyc.filter((d) =>
-					identifiedFeatureStreetCodes.has(d.properties.StreetCode)
-				);
-
-				let oldObjectIdsSize = objectIds.size;
-
-				for (const f of identifiedFeatures) {
-					objectIds.add(f.properties.OBJECTID);
-				}
-
-				updateFeatureState();
-
-				if (oldObjectIdsSize < objectIds.size) {
-					e.currentTarget.reset();
-					return;
-				}
-
-				incorrectGuess++;
-
-				if (incorrectGuess) {
-					const input = e.currentTarget.querySelector('input');
-					if (!input) {
+			<form
+				onsubmit={async (e) => {
+					e.preventDefault();
+					const formData = new FormData(e.currentTarget);
+					const attemptData = formData.get('attempt');
+					if (!attemptData) {
 						return;
 					}
 
-					input.classList.remove('shake');
-					await tick();
-					input.classList.add('shake');
-				}
-			}}
-		>
-			<label for="guess" class="sr-only">Enter a street name</label>
-			<input type="text" name="attempt" id="attempt" placeholder="Enter a street name" />
-		</form>
+					const attempt = attemptData.toString().toLowerCase().trim();
+					const expandedAttempt = expand(attempt);
 
-		<details>
-			<summary>
-				<p style="display: inline; font-family: var(--font-sans); color: var(--color-primary)">
-					{#key identifiedMiles}
-						<span class="number" class:update={identifiedMiles > 0}
-							>{numberFormat.format(identifiedMiles)}</span
-						>
-					{/key}
-					of
-					<span class="number">{numberFormat.format(metadata.mileLength)}</span>
-					miles
-					{#key identifiedMiles}
-						<span class="parenthesis" class:update={identifiedMiles > 0}
-							>(<span class="number"
-								>{Math.round((identifiedMiles / metadata.mileLength) * 100)}</span
-							>%)</span
-						>
-					{/key}
-					identified {#if objectIds.size > 0}<small
-							class="parenthesis"
-							style="color: var(--color-neutral)">[Click for details]</small
-						>{/if}
-				</p>
-			</summary>
-			<ul>
-				{#each identifiedStreets as [borough, boroughStreets] (borough)}
-					{@const boroughLength = boroughLengths.get(borough) ?? 0}
-					<li>
-						<details>
-							<summary
-								>{#key boroughStreets.length}
-									<p style="display: inline;" class="update">
-										<span class="borough">{borough}</span>
-										<span class="parenthesis">
-											(<span class="number"
-												>{Math.round(
-													(boroughLength / metadata.boroughLengths[borough]) * 100
-												)}%</span
-											>)
-										</span>
-									</p>
-								{/key}
-							</summary>
-							<ul class="streets">
-								{#each boroughStreets as street (street)}
-									<li class="street update">{street.toLowerCase()}</li>
-								{/each}
-							</ul>
-						</details>
-					</li>
-				{/each}
-			</ul>
-		</details>
+					// eslint-disable-next-line svelte/prefer-svelte-reactivity
+					const identifiedFeatureStreetCodes = new Set(
+						data.nyc
+							.filter((d) => {
+								const street = d.properties.Street.toLowerCase();
+								return street === attempt || street === expandedAttempt;
+							})
+							.map((d) => d.properties.StreetCode)
+					);
 
-		<details>
-			<summary style="color: var(--color-neutral);"
-				><small>Made by <a href="https://erxclau.me" id="byline">Eric Lau</a></small></summary
+					const alternateJoinIds = new Set(
+						data.names
+							.filter((d) => {
+								return (
+									d.Street.toLowerCase() === attempt || d.Street.toLowerCase() === expandedAttempt
+								);
+							})
+							.map((d) => d.Join_ID)
+					);
+
+					if (identifiedFeatureStreetCodes.size === 0) {
+						// TODO: may need some improvement here...
+						for (const f of data.nyc) {
+							if (alternateJoinIds.has(f.properties.Join_ID)) {
+								identifiedFeatureStreetCodes.add(f.properties.StreetCode);
+							}
+						}
+					}
+
+					const identifiedFeatures = data.nyc.filter((d) =>
+						identifiedFeatureStreetCodes.has(d.properties.StreetCode)
+					);
+
+					let oldObjectIdsSize = objectIds.size;
+
+					for (const f of identifiedFeatures) {
+						objectIds.add(f.properties.OBJECTID);
+					}
+
+					updateFeatureState();
+
+					if (oldObjectIdsSize < objectIds.size) {
+						e.currentTarget.reset();
+						return;
+					}
+
+					incorrectGuess++;
+
+					if (incorrectGuess) {
+						const input = e.currentTarget.querySelector('input');
+						if (!input) {
+							return;
+						}
+
+						input.classList.remove('shake');
+						await tick();
+						input.classList.add('shake');
+					}
+				}}
 			>
-			<p style="padding-left: 0.625rem;">
-				<small>
-					This page uses a modified version of
-					<a href="https://www.nyc.gov/content/planning/pages/resources/datasets/lion">LION</a>
-					<span class="parenthesis"
-						>(<a href="https://hub.arcgis.com/datasets/DCP::lion/about">ArcGIS Hub</a>)</span
-					> from New York City’s Department of City Planning. Modifications were made in Mapshaper. Data
-					is loaded using Flatgeobuf.</small
+				<label for="guess" class="sr-only">Enter a street name</label>
+				<input type="text" name="attempt" id="attempt" placeholder="Enter a street name" />
+			</form>
+		</div>
+
+		<div style="display: grid; gap: 0.625rem;">
+			<details>
+				<summary>
+					<p style="display: inline; font-family: var(--font-sans); color: var(--color-primary)">
+						{#key identifiedMiles}
+							<span class="number" class:update={identifiedMiles > 0}
+								>{numberFormat.format(identifiedMiles)}</span
+							>
+						{/key}
+						of
+						<span class="number">{numberFormat.format(metadata.mileLength)}</span>
+						miles
+						{#key identifiedMiles}
+							<span class="parenthesis" class:update={identifiedMiles > 0}
+								>(<span class="number"
+									>{Math.round((identifiedMiles / metadata.mileLength) * 100)}</span
+								>%)</span
+							>
+						{/key}
+						identified {#if objectIds.size > 0}<small
+								class="parenthesis"
+								style="color: var(--color-neutral)">[Click for details]</small
+							>{/if}
+					</p>
+				</summary>
+				<ul>
+					{#each identifiedStreets as [borough, boroughStreets] (borough)}
+						{@const boroughLength = boroughLengths.get(borough) ?? 0}
+						<li>
+							<details>
+								<summary
+									>{#key boroughStreets.length}
+										<p style="display: inline;" class="update">
+											<span class="borough">{borough}</span>
+											<span class="parenthesis">
+												(<span class="number"
+													>{Math.round(
+														(boroughLength / metadata.boroughLengths[borough]) * 100
+													)}%</span
+												>)
+											</span>
+										</p>
+									{/key}
+								</summary>
+								<ul class="streets">
+									{#each boroughStreets as street (street)}
+										<li class="street update">{street.toLowerCase()}</li>
+									{/each}
+								</ul>
+							</details>
+						</li>
+					{/each}
+				</ul>
+			</details>
+
+			<details>
+				<summary style="color: var(--color-neutral);"
+					><small>Made by <a href="https://erxclau.me" id="byline">Eric Lau</a></small></summary
 				>
-			</p>
-		</details>
+				<p style="padding-left: 0.625rem;">
+					<small>
+						This page uses a modified version of
+						<a href="https://www.nyc.gov/content/planning/pages/resources/datasets/lion">LION</a>
+						<span class="parenthesis"
+							>(<a href="https://hub.arcgis.com/datasets/DCP::lion/about">ArcGIS Hub</a>)</span
+						> from New York City’s Department of City Planning. Modifications were made in Mapshaper.
+						Data is loaded using Flatgeobuf.</small
+					>
+				</p>
+			</details>
+		</div>
 	</hgroup>
 
 	<figure>
@@ -413,6 +434,7 @@
 	}
 
 	hgroup {
+		--padding: 1rem;
 		position: absolute;
 		top: 0;
 		z-index: 1;
@@ -420,21 +442,35 @@
 		max-width: 400px;
 		width: 100%;
 		box-sizing: border-box;
-		padding: 1rem;
+		padding: var(--padding);
+		padding-top: 0;
 		display: grid;
-		gap: 0.625rem;
 		overflow: scroll;
 		max-height: calc(100vh - 36px);
 	}
 
+	#form {
+		display: grid;
+		gap: 0.625rem;
+		position: sticky;
+		top: 0;
+		padding-top: var(--padding);
+		padding-bottom: 0.625rem;
+		background-color: inherit;
+	}
+
 	@media screen and (max-width: 600px) {
 		hgroup {
+			--padding: 0.5rem;
 			max-width: 100%;
 			top: unset;
-			padding: 0.5rem;
 			bottom: 0;
-			gap: 0.5rem;
 			max-height: 50vh;
+		}
+
+		#form {
+			gap: 0.5rem;
+			padding-bottom: 0.5rem;
 		}
 
 		:global(.mapboxgl-ctrl-bottom-right, .mapboxgl-ctrl-bottom-left) {
