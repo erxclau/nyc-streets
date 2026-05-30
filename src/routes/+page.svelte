@@ -111,9 +111,47 @@
 		return rollups(
 			data.nyc.filter((d) => objectIds.has(d.properties.OBJECTID)),
 			(v) =>
-				Array.from(new Set(v.map((o) => o.properties.Street.toLowerCase()))).sort((a, b) =>
-					ascending(a, b)
-				),
+				Array.from(new Set(v.map((o) => o.properties.Street.toLowerCase()))).sort((a, b) => {
+					const numStartRegex = /^\d+\s/;
+					const aNumStart = numStartRegex.exec(a);
+					const bNumStart = numStartRegex.exec(b);
+
+					if (aNumStart !== null && bNumStart !== null) {
+						const aNum = +aNumStart[0].trim();
+						const bNum = +bNumStart[0].trim();
+
+						const aRest = a.replaceAll(aNumStart[0], '').trim();
+						const bRest = b.replaceAll(bNumStart[0], '').trim();
+
+						return ascending(aNum, bNum) || ascending(aRest, bRest);
+					}
+
+					if (
+						(aNumStart === null && bNumStart !== null) ||
+						(aNumStart !== null && bNumStart === null)
+					) {
+						return ascending(a, b);
+					}
+
+					const numRestRegex = /\s\d+\s|\s\d+$/;
+					const aNumRest = numRestRegex.exec(a);
+					const bNumRest = numRestRegex.exec(b);
+
+					if (aNumRest === null || bNumRest === null) {
+						return ascending(a, b);
+					}
+
+					const aSansNum = a.replaceAll(aNumRest[0], '').trim();
+					const bSansNum = b.replaceAll(bNumRest[0], '').trim();
+
+					if (aSansNum === bSansNum) {
+						const aNum = +aNumRest[0];
+						const bNum = +bNumRest[0];
+						return ascending(aNum, bNum) || ascending(a, b);
+					}
+
+					return ascending(a, b);
+				}),
 			(d) =>
 				boroughCodes[+d.properties.StreetCode.toString().charAt(0) as keyof typeof boroughCodes]
 		).sort(([a], [b]) => ascending(a, b));
@@ -190,9 +228,7 @@
 							type: f.geometry.type,
 							coordinates: f.geometry.coordinates.map((d) => d.map((o) => +o.toPrecision(8)))
 						},
-						properties: {
-							objectId: f.properties.OBJECTID
-						}
+						properties: {}
 					};
 				})
 			} as const;
