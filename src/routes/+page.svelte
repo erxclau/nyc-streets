@@ -86,16 +86,16 @@
 	let objectIds: SvelteSet<number> = $state(new SvelteSet());
 	let incorrectGuess = $state(0);
 
+	const identifiedFeatures = $derived(data.nyc.filter((d) => objectIds.has(d.properties.OBJECTID)));
+
 	const { identifiedMiles, boroughLengths } = $derived.by(() => {
-		const objectLengths = data.nyc
-			.filter((d) => objectIds.has(d.properties.OBJECTID))
-			.map((d) => {
-				return {
-					length: length(d, { units: 'miles' }),
-					borough:
-						boroughCodes[+d.properties.StreetCode.toString().charAt(0) as keyof typeof boroughCodes]
-				};
-			});
+		const objectLengths = identifiedFeatures.map((d) => {
+			return {
+				length: length(d, { units: 'miles' }),
+				borough:
+					boroughCodes[+d.properties.StreetCode.toString().charAt(0) as keyof typeof boroughCodes]
+			};
+		});
 
 		return {
 			identifiedMiles: sum(objectLengths, (d) => d.length),
@@ -109,7 +109,7 @@
 
 	const identifiedStreets = $derived(
 		rollups(
-			data.nyc.filter((d) => objectIds.has(d.properties.OBJECTID)),
+			identifiedFeatures,
 			(v) => {
 				return Array.from(new Set(v.map((o) => o.properties.Street.toLowerCase()))).sort((a, b) => {
 					const numStartRegex = /^\d+\s/;
