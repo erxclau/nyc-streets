@@ -628,6 +628,7 @@
 		color: var(--color-neutral);
 		font-size: 0.875rem;
 		text-transform: capitalize;
+		font-variant-numeric: tabular-nums;
 	}
 
 	ul.streets {
