@@ -159,15 +159,17 @@
 
 	const updateFeatureState = () => {
 		for (const id of objectIds) {
-			map.setFeatureState(
-				{
-					id: id,
-					source: 'source-nyc'
-				} as FeatureSelector,
-				{
+			const featureSelector = {
+				id: id,
+				source: 'source-nyc'
+			} as FeatureSelector;
+
+			const highlighted = map.getFeatureState(featureSelector)?.['highlight'];
+			if (!highlighted) {
+				map.setFeatureState(featureSelector, {
 					highlight: true
-				}
-			);
+				});
+			}
 		}
 	};
 
