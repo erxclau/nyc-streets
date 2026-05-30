@@ -84,7 +84,6 @@
 
 	// eslint-disable-next-line svelte/no-unnecessary-state-wrap
 	let objectIds: SvelteSet<number> = $state(new SvelteSet());
-	let incorrectGuess = $state(0);
 
 	const identifiedFeatures = $derived(data.nyc.filter((d) => objectIds.has(d.properties.OBJECTID)));
 
@@ -159,19 +158,10 @@
 	);
 
 	const updateFeatureState = () => {
-		const highlightFeatures = map.querySourceFeatures('source-nyc').filter((d) => {
-			const id = d.id;
-			if (id === undefined || isNaN(+id)) {
-				return false;
-			}
-
-			return objectIds.has(+id);
-		});
-
-		for (const feature of highlightFeatures) {
+		for (const id of objectIds) {
 			map.setFeatureState(
 				{
-					id: feature.id,
+					id: id,
 					source: 'source-nyc'
 				} as FeatureSelector,
 				{
@@ -344,25 +334,20 @@
 						objectIds.union(new Set(identifiedFeatures.map((d) => d.properties.OBJECTID)))
 					);
 
-					updateFeatureState();
-
 					if (oldObjectIdsSize < objectIds.size) {
+						updateFeatureState();
 						e.currentTarget.reset();
 						return;
 					}
 
-					incorrectGuess++;
-
-					if (incorrectGuess) {
-						const input = e.currentTarget.querySelector('input');
-						if (!input) {
-							return;
-						}
-
-						input.classList.remove('shake');
-						await tick();
-						input.classList.add('shake');
+					const input = e.currentTarget.querySelector('input');
+					if (!input) {
+						return;
 					}
+
+					input.classList.remove('shake');
+					await tick();
+					input.classList.add('shake');
 				}}
 			>
 				<label for="guess" class="sr-only">Enter a street name</label>
