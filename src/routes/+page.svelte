@@ -107,11 +107,11 @@
 		};
 	});
 
-	const identifiedStreets = $derived.by(() => {
-		return rollups(
+	const identifiedStreets = $derived(
+		rollups(
 			data.nyc.filter((d) => objectIds.has(d.properties.OBJECTID)),
-			(v) =>
-				Array.from(new Set(v.map((o) => o.properties.Street.toLowerCase()))).sort((a, b) => {
+			(v) => {
+				return Array.from(new Set(v.map((o) => o.properties.Street.toLowerCase()))).sort((a, b) => {
 					const numStartRegex = /^\d+\s/;
 					const aNumStart = numStartRegex.exec(a);
 					const bNumStart = numStartRegex.exec(b);
@@ -150,12 +150,13 @@
 						return ascending(aNum, bNum) || ascending(a, b);
 					}
 
-					return ascending(a, b);
-				}),
+					return ascending(aSansNum, bSansNum);
+				});
+			},
 			(d) =>
 				boroughCodes[+d.properties.StreetCode.toString().charAt(0) as keyof typeof boroughCodes]
-		).sort(([a], [b]) => ascending(a, b));
-	});
+		).sort(([a], [b]) => ascending(a, b))
+	);
 
 	const updateFeatureState = () => {
 		const highlightFeatures = map.querySourceFeatures('source-nyc').filter((d) => {
