@@ -82,7 +82,8 @@
 
 	let map: mapboxgl.Map;
 
-	let objectIds: SvelteSet<number> = new SvelteSet();
+	// eslint-disable-next-line svelte/no-unnecessary-state-wrap
+	let objectIds: SvelteSet<number> = $state(new SvelteSet());
 	let incorrectGuess = $state(0);
 
 	const { identifiedMiles, boroughLengths } = $derived.by(() => {
@@ -110,23 +111,9 @@
 		return rollups(
 			data.nyc.filter((d) => objectIds.has(d.properties.OBJECTID)),
 			(v) =>
-				Array.from(new Set(v.map((o) => o.properties.Street))).sort((a, b) => {
-					const aNumberMatch = /^\d+\s|\s\d+\s|\s\d+$/.exec(a);
-					const bNumberMatch = /^\d+\s|\s\d+\s|\s\d+$/.exec(b);
-
-					if (aNumberMatch === null || bNumberMatch === null) {
-						console.log(a, b);
-						return ascending(a, b);
-					}
-
-					const aSansNumber = a.replaceAll(aNumberMatch[0], '').trim();
-					const bSansNumber = b.replaceAll(bNumberMatch[0], '').trim();
-
-					const aNumber = +aNumberMatch[0].trim();
-					const bNumber = +bNumberMatch[0].trim();
-
-					return ascending(aSansNumber, bSansNumber) || ascending(aNumber, bNumber);
-				}),
+				Array.from(new Set(v.map((o) => o.properties.Street.toLowerCase()))).sort((a, b) =>
+					ascending(a, b)
+				),
 			(d) =>
 				boroughCodes[+d.properties.StreetCode.toString().charAt(0) as keyof typeof boroughCodes]
 		).sort(([a], [b]) => ascending(a, b));
@@ -166,9 +153,7 @@
 			}
 
 			if (Array.isArray(json)) {
-				for (const id of json) {
-					objectIds.add(id);
-				}
+				objectIds = new SvelteSet(json);
 			}
 		}
 
@@ -318,9 +303,9 @@
 
 					let oldObjectIdsSize = objectIds.size;
 
-					for (const f of identifiedFeatures) {
-						objectIds.add(f.properties.OBJECTID);
-					}
+					objectIds = new SvelteSet(
+						objectIds.union(new Set(identifiedFeatures.map((d) => d.properties.OBJECTID)))
+					);
 
 					updateFeatureState();
 
@@ -394,7 +379,7 @@
 								</summary>
 								<ul class="streets">
 									{#each boroughStreets as street (street)}
-										<li class="street update">{street.toLowerCase()}</li>
+										<li class="street update">{street}</li>
 									{/each}
 								</ul>
 							</details>
@@ -434,7 +419,7 @@
 	}
 
 	hgroup {
-		--padding: 1rem;
+		--padding: 0.875rem;
 		--gap: 0.625rem;
 		--margin: 0.5rem;
 		position: absolute;
