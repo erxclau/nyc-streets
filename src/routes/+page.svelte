@@ -14,6 +14,7 @@
 	let { data } = $props();
 
 	const localStorageKey = 'nyc-streets-object-ids';
+	const modalId = 'confirm-reset-progress';
 
 	const abbreviations = {
 		st: 'street',
@@ -336,7 +337,7 @@
 						objectIds.union(new Set(identifiedFeatures.map((d) => d.properties.OBJECTID)))
 					);
 
-					if (oldObjectIdsSize < objectIds.size) {
+					if (oldObjectIdsSize !== objectIds.size) {
 						updateFeatureState();
 						e.currentTarget.reset();
 						return;
@@ -357,10 +358,10 @@
 			</form>
 		</div>
 
-		<div style="display: grid; gap: var(--gap);">
+		<div style="display: grid; gap: calc(var(--gap) / 2);">
 			<details>
 				<summary>
-					<p style="display: inline; font-family: var(--font-sans); color: var(--color-primary)">
+					<p style="color: var(--color-primary);">
 						{#key identifiedMiles}
 							<span class="number" class:update={identifiedMiles > 0}
 								>{numberFormat.format(identifiedMiles)}</span
@@ -376,10 +377,7 @@
 								>%)</span
 							>
 						{/key}
-						identified {#if objectIds.size > 0}<small
-								class="parenthesis"
-								style="color: var(--color-neutral)">[Click for details]</small
-							>{/if}
+						identified
 					</p>
 				</summary>
 				<ul>
@@ -413,19 +411,68 @@
 			</details>
 
 			<details>
-				<summary style="color: var(--color-neutral);"
-					><small>Made by <a href="https://erxclau.me" id="byline">Eric Lau</a></small></summary
+				<summary style="color: var(--color-neutral)"
+					><span style="font-size: 0.925rem;">Settings and details</span></summary
 				>
-				<p style="padding-left: 0.625rem;">
-					<small>
-						This page uses a modified version of
-						<a href="https://www.nyc.gov/content/planning/pages/resources/datasets/lion">LION</a>
-						<span class="parenthesis"
-							>(<a href="https://hub.arcgis.com/datasets/DCP::lion/about">ArcGIS Hub</a>)</span
-						> from New York City’s Department of City Planning. Modifications were made in Mapshaper.
-						Data is loaded using Flatgeobuf.</small
-					>
-				</p>
+				<div style="padding-left: 0.625rem; display: grid; gap: 0.375rem;">
+					<div>
+						<p><small>Made by <a href="https://erxclau.me" id="byline">Eric Lau</a>.</small></p>
+						<p>
+							<small>
+								This page uses a modified version of
+								<a href="https://www.nyc.gov/content/planning/pages/resources/datasets/lion">LION</a
+								>
+								<span class="parenthesis"
+									>(<a href="https://hub.arcgis.com/datasets/DCP::lion/about">ArcGIS Hub</a>)</span
+								>
+								from New York City’s Department of City Planning. Modifications were made in Mapshaper.
+								Data is loaded using Flatgeobuf. View the source code on
+								<a href="https://github.com/erxclau/nyc-streets">GitHub</a>.</small
+							>
+						</p>
+					</div>
+
+					<div>
+						<button command="show-modal" commandfor={modalId} disabled={objectIds.size === 0}
+							>Reset progress</button
+						>
+
+						<dialog id={modalId}>
+							<div style="display: grid; gap: var(--gap);">
+								<p>Are you sure you want to reset your progress?</p>
+
+								<menu>
+									<li>
+										<button commandfor={modalId} command="close">Cancel</button>
+									</li>
+									<li>
+										<form method="dialog">
+											<button
+												onclick={() => {
+													for (const id of objectIds) {
+														const featureSelector = {
+															id: id,
+															source: 'source-nyc'
+														} as FeatureSelector;
+
+														const highlighted = map.getFeatureState(featureSelector)?.['highlight'];
+														if (highlighted) {
+															map.setFeatureState(featureSelector, {
+																highlight: false
+															});
+														}
+													}
+
+													objectIds = new SvelteSet();
+												}}>Confirm</button
+											>
+										</form>
+									</li>
+								</menu>
+							</div>
+						</dialog>
+					</div>
+				</div>
 			</details>
 		</div>
 	</hgroup>
@@ -449,20 +496,59 @@
 		position: absolute;
 		top: 0;
 		z-index: 1;
-		background-color: var(--color-secondary);
-		max-width: 400px;
-		width: 100%;
-		box-sizing: border-box;
 		padding: var(--padding);
 		padding-top: 0;
 		display: grid;
 		overflow: scroll;
 		max-height: calc(100vh - 36px - var(--margin));
-		box-shadow: 0 0 1px 1px rgb(from var(--color-neutral) r g b / 0.25);
 
-		border-radius: 0.375rem;
 		margin-top: var(--margin);
 		margin-left: var(--margin);
+	}
+
+	hgroup,
+	dialog,
+	button {
+		box-shadow: 0 0 1px 1px rgb(from var(--color-neutral) r g b / 0.25);
+		border-radius: 0.375rem;
+	}
+
+	hgroup,
+	dialog {
+		background-color: var(--color-secondary);
+		width: 100%;
+		box-sizing: border-box;
+		max-width: 400px;
+	}
+
+	dialog {
+		padding: var(--padding);
+		border: none;
+		max-width: fit-content;
+	}
+
+	button {
+		font-family: var(--font-sans);
+		background-color: var(--color-primary);
+		color: var(--color-secondary);
+		border: none;
+		font-size: 0.875rem;
+		transition: background-color 125ms linear, color 125ms linear, opacity 125ms linear;
+		padding: 0.125rem 0.375rem;
+	}
+
+	button:active,
+	button:hover,
+	button:focus {
+		background-color: var(--color-highlight);
+		color: var(--color-secondary-active);
+	}
+
+	button:disabled {
+		background-color: var(--color-primary);
+		color: var(--color-secondary);
+		opacity: 50%;
+		cursor: not-allowed;
 	}
 
 	#form {
@@ -503,6 +589,7 @@
 		cursor: pointer;
 		list-style-position: outside;
 		margin-left: 10px;
+		color: var(--color-primary);
 	}
 
 	details[open] > summary {
@@ -537,7 +624,7 @@
 	}
 
 	a {
-		color: var(--color-neutral);
+		color: var(--color-primary);
 		text-underline-offset: 3px;
 	}
 
@@ -596,15 +683,24 @@
 		font-variant-numeric: tabular-nums;
 	}
 
-	ul {
+	ul,
+	menu {
 		margin: 0;
 		padding: 0;
-		padding-left: 0.625rem;
 		list-style: none;
+	}
+
+	ul {
+		padding-left: 0.625rem;
 		font-family: var(--font-sans);
 
 		display: grid;
 		gap: 0.125rem;
+	}
+
+	menu {
+		display: flex;
+		gap: 0.5rem;
 	}
 
 	.borough {
