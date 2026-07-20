@@ -284,7 +284,9 @@
 <main>
 	<hgroup>
 		<div id="form">
-			<h1>Name New York City streets</h1>
+			<h1>
+				Name New York City <span class="non-wonk">s</span>treet<span class="non-wonk">s</span>
+			</h1>
 
 			<form
 				onsubmit={async (e) => {
@@ -533,7 +535,10 @@
 		color: var(--color-secondary);
 		border: none;
 		font-size: 0.875rem;
-		transition: background-color 125ms linear, color 125ms linear, opacity 125ms linear;
+		transition:
+			background-color 125ms linear,
+			color 125ms linear,
+			opacity 125ms linear;
 		padding: 0.125rem 0.375rem;
 	}
 
@@ -606,9 +611,12 @@
 		color: var(--color-headline);
 		font-size: calc(1rem + 0.875vw);
 		font-weight: 300;
-		font-variation-settings: 'WONK' 0;
 		text-wrap: pretty;
 		line-height: calc(1rem + 0.875vw);
+	}
+
+	.non-wonk {
+		font-variation-settings: 'WONK' 0;
 	}
 
 	h1,
