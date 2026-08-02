@@ -80,7 +80,6 @@
 	});
 
 	let ref: HTMLDivElement;
-
 	let map: mapboxgl.Map;
 
 	// eslint-disable-next-line svelte/no-unnecessary-state-wrap
@@ -501,7 +500,7 @@
 		padding: var(--padding);
 		padding-top: 0;
 		display: grid;
-		overflow: scroll;
+		overflow-y: scroll;
 		max-height: calc(100vh - 36px - var(--margin));
 
 		margin-top: var(--margin);
