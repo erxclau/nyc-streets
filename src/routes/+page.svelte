@@ -354,7 +354,7 @@
 					input.classList.add('shake');
 				}}
 			>
-				<label for="guess" class="sr-only">Enter a street name</label>
+				<label for="attempt" class="sr-only">Enter a street name</label>
 				<input type="text" name="attempt" id="attempt" placeholder="Enter a street name" />
 			</form>
 		</div>
